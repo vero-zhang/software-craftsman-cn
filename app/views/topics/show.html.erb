@@ -1,0 +1,135 @@
+<% content_for :scripts do %>
+  <script type="text/javascript">
+    <% if current_user && !@user_liked_reply_ids.blank? %>
+    Topics.user_liked_reply_ids = [<%= @user_liked_reply_ids.join(",") %>];
+    <% end %>
+    $(document).ready(function(){
+      <% if admin? %>
+        $("#replies .reply a.edit").css('display','inline-block');
+      <% elsif current_user %>
+        $("#replies .reply a.edit[data-uid='<%= current_user.id %>']").css('display','inline-block');
+      <% end %>
+    })
+  </script>
+<% end %>
+
+<div class="row">
+  <div class="col-md-9">
+    <div class="topic-detail panel panel-default">
+      <%= render partial: "topics/topic_info", locals: { topic: @topic } %>
+
+      <div class="panel-body markdown">
+        <%= raw SiteConfig.before_topic_html %>
+
+        <article>
+          <% if @topic.video %>
+            <% @topic.video.split(',').each do |video_id| %>
+              <embed height="415" width="100%" quality="high" allowfullscreen="true" type="application/x-shockwave-flash" src="https://static-s.bilibili.com/miniloader.swf" flashvars="aid=<%= video_id %>&page=1" pluginspage="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">
+            <% end %>
+          <% end %>
+          <%= raw @topic.body_html %>
+        </article>
+        <%= raw SiteConfig.after_topic_html %>
+      </div>
+
+      <% if @topic.excellent? %>
+        <div class="label-awesome">
+          <i class="fa fa-diamond awesome"></i> 本帖已被设为精华帖！
+          <% if admin? %>
+          <div class="pull-right">
+            <%= link_to icon_tag("close"), unsuggest_topic_path(@topic.id), data: { confirm: "确定要取消么？", method: "delete" } %>
+          </div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <div class="panel-footer clearfix">
+        <%= render "buttons" %>
+      </div>
+    </div>
+
+    <%= render partial: "ban_reason" %>
+
+<% ab_test(:adv, 'visible', 'hidden') do |visibility| %>
+  <% if visibility == 'visible' %>
+    <div class="panel panel-default topics">
+      <div class="panel-body">
+        <%= link_to advertisements_show_path(1), target: '_blank' do %>
+          <%= image_tag 'https://codingstyle-cn.b0.upaiyun.com/photo/2016/58ab3e3d7297bfc79da7af09223eefec.png', style: 'max-width: 100%;max-height: 100%' %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+<% end %>
+
+  <% if @replies.blank? %>
+    <div class="no-result">
+      <%= t("topics.no_replies") %>
+    </div>
+  <% else %>
+    <div id="replies" class="panel panel-default" data-last-floor="<%= @replies.count %>">
+      <div class="total panel-heading">
+        共收到 <b><%= @topic.replies_count %></b> 条回复
+      </div>
+      <div class="items panel-body">
+        <%= cache([@topic, "raw:#{@show_raw}"]) do %>
+          <%= render partial: "replies/reply", collection: @replies %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <% if current_user %>
+    <div id="reply" class="panel panel-default">
+      <div class="panel-heading">回帖</div>
+      <div class="panel-body">
+      <% if can? :create, Reply %>
+
+        <%= render "editor_toolbar" %>
+        <%= form_for(Reply.new, remote: true, url: topic_replies_path(@topic)) do |f| %>
+
+          <div class="form-group">
+            <%= f.text_area :body, class: "topic-editor form-control", rows: "4", tabindex: "1" %>
+          </div>
+          <div class="submit-buttons">
+            <button type="submit" id="reply-button" class="btn btn-primary" tabindex="2", data-disable-with='<%= t("topics.submit_reply") %>'><%= t("topics.submit_reply")%></button>
+            <span class="help-inline" style="padding-left: 5px;" title="或者 Ctrl + Enter"><kbd>Command</kbd> + <kbd>Enter</kbd></span>
+
+            <div class="pull-right"><a href="/markdown" target="_blank">排版说明</a></div>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="alert alert-info">
+          当前设置新手用户不能在 22:00 ~ 9:00 发帖。
+        </div>
+      <% end %>
+      </div>
+    </div>
+  <% else %>
+    <div class="panel panel-default">
+      <div class="panel-body">
+        <%= render partial: "topics/translation/need_login_to_reply" %>
+      </div>
+    </div>
+  <% end %>
+
+  <% if @related_topics.present? %>
+      <div class="panel panel-default topics">
+        <div class="panel-heading media clearfix">
+          <%= t("topics.related_topics") %>
+        </div>
+        <div class="panel-body">
+          <% cache(@related_topics) do %>
+              <%= render partial: "topics/topic", collection: @related_topics, locals: { suggest: false } %>
+          <% end %>
+        </div>
+      </div>
+  <% end %>
+  </div>
+
+  <% if !mobile? %>
+    <div class="sidebar hidden-mobile col-md-3">
+      <%= render 'topic_sidebar' %>
+    </div>
+  <% end %>
+</div>

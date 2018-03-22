@@ -1,0 +1,175 @@
+<!--
+      ____        __             ________    _
+     / __ \__  __/ /_  __  __   / ____/ /_  (_)___  ____ _
+    / /_/ / / / / __ \/ / / /  / /   / __ \/ / __ \/ __ `/
+   / _, _/ /_/ / /_/ / /_/ /  / /___/ / / / / / / / /_/ /
+  /_/ |_|\__,_/_.___/\__, /   \____/_/ /_/_/_/ /_/\__,_/
+                    /____/
+  ========================================================
+                                          ruby-china.org
+
+  App Environments:
+  --------------------------------------------------------
+  Ruby:  <%= RUBY_VERSION %><%= "-p#{RUBY_PATCHLEVEL}" if defined? RUBY_PATCHLEVEL %>
+  Rails: <%= Rails.version %>
+-->
+<!DOCTYPE html>
+<html>
+<head>
+  <%= render_page_title %>
+  <meta charset='utf-8' />
+  <meta name="keywords" content="<%= @meta_keywords %>" />
+  <meta name="description" content="<%= @meta_description %>" />
+  <meta name="apple-mobile-web-app-capable" content="no">
+  <meta content='True' name='HandheldFriendly' />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <link rel="apple-touch-icon-precomposed" href="<%= cached_asset_path("ios-icon.png") %>" />
+  <link rel="shortcut icon" href="<%= cached_asset_path("big_logo.png") %>" />
+  <link rel="alternate" type="application/rss+xml" title="订阅最新帖" href="<%= feed_topics_url %>" />
+  <link rel="mask-icon" href="<%= cached_asset_path("mask.svg") %>" color="#BD2D2D" />
+  <%= stylesheet_link_tag_with_cached "front" %>
+  <%= javascript_include_tag_with_cached "app" %>
+  <%= csrf_meta_tag %>
+  <%= raw SiteConfig.custom_head_html %>
+  <script type='text/javascript'>
+    var _vds = _vds || [];
+    window._vds = _vds;
+    (function(){
+      _vds.push(['setAccountId', '96740c419d6751f3']);
+    <% if current_user %>
+      _vds.push(['setCS1', 'user_id', '<%= current_user.id %>']);
+      _vds.push(['setCS3', 'user_name', '<%= current_user.fullname %>']);
+    <% end %>
+      (function() {
+        var vds = document.createElement('script');
+        vds.type='text/javascript';
+        vds.async = true;
+        vds.src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 'dn-growing.qbox.me/vds.js';
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(vds, s);
+      })();
+    })();
+  </script>
+</head>
+<body data-controller-name="<%= controller_name %>">
+  <div id="advertisement-container" class="full-screen-mask-container" style="display: none;" onClick="onClickAdvertisementPassButton();">
+    <div class="center-vertically-container">
+      <p class="full-screen-mask-container__title">您有一份定制课程等待领取</p>
+      <img class="full-screen-mask-container__poster"src="http://codingstyle.oss-cn-shenzhen.aliyuncs.com/card2.png">
+      <button class="btn full-screen-mask-container__button--primary" type="submit" onClick="onClickAdvertisementSubmitButton();">立即领取</button>
+    </div>
+    <a class="full-screen-mask-container__button--secondary" href="javascript:void(0)" role="button" onClick="onClickAdvertisementPassButton();">我先随意逛逛</a>
+  </div>
+
+  <div class="header">
+    <nav class="navbar navbar-inverse navbar-static-top navbar-default">
+      <div class="container">
+        <div class="navbar-header" id="navbar-header" data-turbolinks-permanent>
+          <a href="/" class="navbar-brand"><b>Coding</b> Style</a>
+        </div>
+
+        <span id="main-nav-menu" data-turbolinks-temporary>
+          <%= render_list class: "nav navbar-nav" do |li|
+             li << link_to(t("menu.topics"), topics_path)
+             li << link_to(t("menu.open_classes"), open_classes_path)
+          end %>
+        </span>
+
+        <%= render "common/user_nav" %>
+
+        <ul class="nav navbar-nav navbar-right">
+          <li class="nav-search hidden-xs">
+            <form class="navbar-form form-search" action="/search" method="GET">
+              <div class="form-group">
+                <input class="form-control" name="q" type="text" value="<%= params[:q] %>" placeholder="搜索本站内容" />
+              </div>
+              <i class="fa btn-search fa-search"></i>
+              <i class="fa btn-close fa-times-circle"></i>
+            </form>
+          </li>
+          <% if current_user %>
+          <%
+          badge_class = ""
+          badge_class = "new" if unread_notify_count > 0
+          %>
+          <li class="notification-count">
+            <a href="<%= notifications_path %>" class="<%= badge_class %>" title="通知"><i class="fa fa-bell"></i><span class="count"><%= unread_notify_count %></span></a>
+          </li>
+          <% end %>
+        </ul>
+      </div>
+    </nav>
+  </div>
+
+  <div id="main" class="main-container container">
+    <%= birthday_tag %>
+    <%= notice_message %>
+    <%= yield %>
+  </div>
+
+  <% if not mobile? %>
+  <footer class="footer" id="footer" data-turbolinks-permanent>
+    <div class="container">
+      <%= raw SiteConfig.footer_html %>
+    </div>
+
+  </footer>
+  <% end %>
+
+  <% if mobile? %>
+    <script type="text/javascript">
+    app_mobile = true;
+    $('body').animate({ scrollTop: -1 },0);
+    </script>
+  <% end %>
+
+  <script type="text/javascript">
+    $(document).ready(function() {
+      var visitedAd = document.cookie.indexOf("advertisement-visited=") !== -1;
+
+      if (!visitedAd) {
+        showAd();
+      }
+    });
+
+    function onClickAdvertisementSubmitButton() {
+      window.open("<%= @adv_url %>");
+
+      passAd();
+    }
+
+    function onClickAdvertisementPassButton() {
+      passAd();
+    }
+
+    function passAd() {
+      $("#advertisement-container").hide();      
+      $("body").removeClass("not-scroll");
+
+      document.cookie="advertisement-visited=" +escape(true)
+    }
+
+    function showAd() {
+      $("body").addClass("not-scroll");
+      $("#advertisement-container").show();
+    }
+  </script>
+
+  <script type="text/javascript" data-turbolinks-eval=false>
+    App.root_url = "<%= root_url %>";
+    App.asset_url = "<%= Setting.upload_url %>";
+    App.locale = "<%= I18n.locale %>";
+    <% if current_user %>
+      App.current_user_id = <%= current_user.id %>;
+      App.access_token = "<%= current_user.temp_access_token %>";
+    <% end %>
+  </script>
+  <%= yield :scripts %>
+  <script>
+    ga('create', '<%= Setting.google_analytics_key %>', 'auto');
+    ga('require', 'displayfeatures');
+    ga('send', 'pageview');
+  </script>
+  <div class="zoom-overlay"></div>
+</body>
+</html>

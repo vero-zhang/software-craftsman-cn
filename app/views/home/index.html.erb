@@ -1,0 +1,91 @@
+<%= raw SiteConfig.index_html %>
+
+<div class="row home-icons hidden-sm hidden-xs">
+  <div class="col-md-4">
+    <div class="item item1">
+      <div class="icon">
+        <a href="<%= @adv_url %>" target="_blank">
+          <img src="https://codingstyle.oss-cn-shenzhen.aliyuncs.com/card1.png" width="250" height="170"/>
+        </a>
+      </div>
+      <div class="text" style="text-align: center;">
+        <a href="<%= @adv_url %>" target="_blank">TDD训练营</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="item item1">
+      <div class="icon">
+        <a href="http://www.bilibili.com/video/av3873315/" target="_blank">
+          <img src="https://codingstyle-cn.b0.upaiyun.com/photo/2016/0b6fd0e484dfa6ba70760fc12b87faab.png" width="250" height="170"/>
+        </a>
+      </div>
+      <div class="text" style="text-align: center;">
+        <a href="http://www.bilibili.com/video/av3873315/" target="_blank">函数式编程入门</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="item item1">
+      <div class="icon">
+        <a href="http://www.bilibili.com/video/av3746950/" target="_blank">
+          <img src="https://codingstyle-cn.b0.upaiyun.com/photo/2016/a97e51e5f815bbf31cc1731e839d3320.png" width="250" height="170"/>
+        </a>
+      </div>
+      <div class="text" style="text-align: center;">
+        <a href="http://www.bilibili.com/video/av3746950/" target="_blank">Docker 轻松带你飞</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="home_suggest_topics panel panel-default">
+  <div class="panel-heading">最新帖子...</div>
+  <div class="panel-body topics row">
+    <%
+      odd_topics, even_topics = @recent_topics.partition.each_with_index { |t, i| i.odd?  }
+    %>
+    <div class="col-md-6 topics-group">
+      <% cache([odd_topics, "odd"]) do %>
+        <%= render partial: "topics/topic", collection: odd_topics, locals: { suggest: false } %>
+      <% end %>
+    </div>
+
+    <div class="col-md-6 topics-group">
+      <% cache([even_topics, "even"]) do %>
+        <%= render partial: "topics/topic", collection: even_topics, locals: { suggest: false } %>
+      <% end %>
+    </div>
+  </div>
+  <div class="panel-footer">
+    <%= link_to "查看更多新帖...", recent_topics_path %>
+  </div>
+</div>
+
+<div class="home_suggest_topics panel panel-default">
+  <div class="panel-heading">社区精华帖</div>
+  <div class="panel-body topics row">
+    <%
+      odd_topics, even_topics = @excellent_topics.partition.each_with_index { |t, i| i.odd?  }
+    %>
+    <div class="col-md-6 topics-group">
+      <% cache([odd_topics, "odd"]) do %>
+        <%= render partial: "topics/topic", collection: odd_topics, locals: { suggest: false } %>
+      <% end %>
+    </div>
+
+    <div class="col-md-6 topics-group">
+      <% cache([even_topics, "even"]) do %>
+        <%= render partial: "topics/topic", collection: even_topics, locals: { suggest: false } %>
+      <% end %>
+    </div>
+  </div>
+  <div class="panel-footer">
+    <%= link_to "查看更多精华帖...", excellent_topics_path %>
+  </div>
+</div>
+
+<% if !mobile? %>
+  <%= render "/shared/index_sections" %>
+  <%= render "/shared/hot_locations" %>
+<% end %>
